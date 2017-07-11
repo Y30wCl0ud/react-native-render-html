@@ -12,7 +12,7 @@ export default {
   * @return a RN element that represents an anchor tag
   */
     a: (htmlAttribs, children, passProps) => {
-        const style = []
+        const style = [];
         .concat(
             HTMLStyles.defaultStyles.a,
             passProps.htmlStyles ? passProps.htmlStyles.a : undefined,
