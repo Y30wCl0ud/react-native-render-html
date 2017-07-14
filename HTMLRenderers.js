@@ -19,7 +19,7 @@ export default {
 		if (htmlAttribs['data-action-id']) {
 			type = 'action';
 			idType = htmlAttribs['data-action-id']
-		} else if (htmlAttribs['data-acticle-id']) {
+		} else if (htmlAttribs['data-article-id']) {
 			type = 'article';
 			idType = htmlAttribs['data-article-id']
 		} else if (htmlAttribs['data-inquiry-id']) {
