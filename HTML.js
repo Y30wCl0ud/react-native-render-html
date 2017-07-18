@@ -25,14 +25,12 @@ export default class HTML extends React.Component {
 		youtubeApiKey: React.PropTypes.string,
 		videoHeight: React.PropTypes.number || React.PropTypes.string,
 		videoWidth: React.PropTypes.number || React.PropTypes.string,
-
+		videoControls: React.PropTypes.number
 	}
 
 	static defaultProps = {
 		renderers: HTMLRenderers,
-		youtubeVideo: {
-
-		}
+		videoControls: 2
 	}
 
 	constructor(props) {
@@ -197,6 +195,8 @@ export default class HTML extends React.Component {
 									height: this.props.videoHeight || 200,
 									width: this.props.videoWidth || 300
 								}}
+
+								controls={this.props.videoControls}
 							/>
 						)
 
