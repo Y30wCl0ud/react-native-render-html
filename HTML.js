@@ -28,7 +28,10 @@ export default class HTML extends React.Component {
 	}
 
 	static defaultProps = {
-		renderers: HTMLRenderers
+		renderers: HTMLRenderers,
+		youtubeVideo: {
+
+		}
 	}
 
 	constructor(props) {
@@ -187,8 +190,7 @@ export default class HTML extends React.Component {
 								play={false}
 								fullscreen={false}
 								loop={false}
-
-								showFullscreenButton={true}
+								showFullscreenButton={this.props.showFullscreenButton || true}
 								style={{
 									height: this.props.videoHeight || 200,
 									width: this.props.videoWidth || 300
