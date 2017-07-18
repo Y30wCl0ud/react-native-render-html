@@ -182,7 +182,7 @@ export default class HTML extends React.Component {
 					return false;
 				}
 
-				if (node.name === 'span') {
+				if (node.name === 'div') {
 					if (node.attribs['data-video-id']) {
 						ElementsToRender = (
 							<Youtube
