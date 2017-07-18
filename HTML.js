@@ -22,6 +22,7 @@ export default class HTML extends React.Component {
 		onLinkPress: React.PropTypes.func,
 		imagesMaxWidth: React.PropTypes.number,
 		renderers: React.PropTypes.object.isRequired,
+		youtubeApiKey: React.PropTypes.string,
 		videoHeight: React.PropTypes.number || React.PropTypes.string,
 		videoWidth: React.PropTypes.number || React.PropTypes.string,
 
@@ -186,6 +187,7 @@ export default class HTML extends React.Component {
 						ElementsToRender = (
 							<Youtube
 								key={node.attribs['data-video-id']}
+								apiKey={this.props.youtubeApiKey || ''}
 								videoId={node.attribs['data-video-id']}
 								play={false}
 								fullscreen={false}
