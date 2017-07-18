@@ -21,7 +21,10 @@ export default class HTML extends React.Component {
 		containerStyle: View.propTypes.style,
 		onLinkPress: React.PropTypes.func,
 		imagesMaxWidth: React.PropTypes.number,
-		renderers: React.PropTypes.object.isRequired
+		renderers: React.PropTypes.object.isRequired,
+		videoHeight: React.PropTypes.number || React.PropTypes.string,
+		videoWidth: React.PropTypes.number || React.PropTypes.string,
+
 	}
 
 	static defaultProps = {
@@ -173,6 +176,27 @@ export default class HTML extends React.Component {
 				if (node.name === 'img') {
 					this.imgsToRender.push(Element);
 					return false;
+				}
+
+				if (node.name === 'span') {
+					if (node.attribs['data-video-id']) {
+						ElementsToRender = (
+							<Youtube
+								key={node.attribs['data-video-id']}
+								videoId={node.attribs['data-video-id']}
+								play={false}
+								fullscreen={false}
+								loop={false}
+
+								showFullscreenButton={true}
+								style={{
+									height: this.props.videoHeight || 200,
+									width: this.props.videoWidth || 300
+								}}
+							/>
+						)
+
+					}
 				}
 
 				if (TEXT_TAG_NAMES.has(node.name)) {
