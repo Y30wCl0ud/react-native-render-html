@@ -82,7 +82,7 @@ class HTMLElement extends React.Component {
 	render() {
 		const { htmlStyles, tagName, htmlAttribs, renderers, children, imagesMaxWidth, ...passProps } = this.props;
 
-		if (htmlAttribs.style) {
+		if (htmlAttribs.style && !htmlAttribs['data-attr']) {
 			delete htmlAttribs.style;
 			delete htmlAttribs.class;
 		}
