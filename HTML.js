@@ -211,6 +211,7 @@ export default class HTML extends React.Component {
 
 									{
 										this.props.playerState !== 'playing' &&
+										!this.props.play &&
 										<TouchableOpacity
 											activeOpacity={1}
 											onPress={this.props.togglePlay}
