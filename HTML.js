@@ -182,6 +182,7 @@ export default class HTML extends React.Component {
 					this.imgsToRender.push(Element);
 					return false;
 				}
+				
 				if (node.name === 'div') {
 					if (node.attribs['data-video-id']) {
 						if (this.props.customYoutube) {
@@ -201,16 +202,17 @@ export default class HTML extends React.Component {
 											}
 										]}
 										onChangeState={e => {
-											this.props.stateChange(e.state)}}
+											this.props.stateChange(e.state)
+										}}
 										controls={this.props.videoControls}
 										showinfo={this.props.showinfo}
 										modestbranding
 									/>
 
 									{
-										!this.props.play &&
+										this.props.playerState !== 'playing' &&
 										<TouchableOpacity
-											activeOpacity={.9}
+											activeOpacity={1}
 											onPress={this.props.togglePlay}
 											style={{
 												position: 'absolute',
