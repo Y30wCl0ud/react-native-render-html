@@ -10,6 +10,8 @@ import { TEXT_TAG_NAMES } from './HTMLUtils';
 
 import Youtube from 'react-native-youtube';
 
+import HTMLYt from '../../src/HTMLYt';
+
 export default class HTML extends React.Component {
 	/* ****************************************************************************/
 	// Class
@@ -27,7 +29,6 @@ export default class HTML extends React.Component {
 		videoWidth: React.PropTypes.number || React.PropTypes.string,
 		videoControls: React.PropTypes.number,
 		customYoutube: React.PropTypes.bool,
-		showinfo: React.PropTypes.bool
 	}
 
 	static defaultProps = {
@@ -43,6 +44,7 @@ export default class HTML extends React.Component {
 			...(this.props.renderers || {})
 		};
 		this.imgsToRender = [];
+		console.log(props);
 	}
 
 	/* ****************************************************************************/
@@ -182,84 +184,25 @@ export default class HTML extends React.Component {
 					this.imgsToRender.push(Element);
 					return false;
 				}
-				
+
 				if (node.name === 'div') {
 					if (node.attribs['data-video-id']) {
-						if (this.props.customYoutube) {
-							ElementsToRender = (
-								<View key={node.attribs['data-video-id']}>
-									<Youtube
-										apiKey={this.props.youtubeApiKey || ''}
-										videoId={node.attribs['data-video-id']}
-										play={this.props.play}
-										fullscreen={false}
-										loop={false}
-										showFullscreenButton={this.props.showFullscreenButton || true}
-										style={[
-											{
-												height: this.props.videoHeight || 200,
-												width: this.props.videoWidth || 300
-											}
-										]}
-										onChangeState={e => {
-											this.props.stateChange(e.state)
-										}}
-										controls={this.props.videoControls}
-										showinfo={this.props.showinfo}
-										modestbranding
-									/>
 
-									{
-										this.props.playerState !== 'playing' &&
-										!this.props.play &&
-										<TouchableOpacity
-											activeOpacity={1}
-											onPress={this.props.togglePlay}
-											style={{
-												position: 'absolute',
-												left: this.props.videoWidth/2 - 40,
-												top: this.props.videoHeight/2 - 30,
-												justifyContent: 'center',
-												alignItems: 'center',
-												height: 60,
-												width: 80,
-												backgroundColor: 'rgba(0, 125, 198, .9)',
-											}}
-										>
-											<View
-												style={{
-													borderLeftColor: '#fff',
-													borderLeftWidth: 18,
-													borderTopColor: 'transparent',
-													borderTopWidth: 10,
-													borderBottomColor: 'transparent',
-													borderBottomWidth: 10,
-												}}
-											/>
-										</TouchableOpacity>
-									}
-								</View>
-							)
-						} else {
-							ElementsToRender = (
-								<Youtube
-									key={node.attribs['data-video-id']}
-									apiKey={this.props.youtubeApiKey || ''}
+
+
+						// ElementsToRender = ();
+
+						ElementsToRender = (
+							<View key={node.attribs['data-video-id']}>
+								<HTMLYt
+									stateChange={this.props.stateChange}
 									videoId={node.attribs['data-video-id']}
-									play={false}
-									fullscreen={false}
-									loop={false}
-									showFullscreenButton={this.props.showFullscreenButton || true}
-									style={{
-										height: this.props.videoHeight || 200,
-										width: this.props.videoWidth || 300
-									}}
-									controls={this.props.videoControls}
-									showinfo={this.props.showinfo}
-									modestbranding
+									activeVideoId={this.props.activeVideoId}
+									setActiveId={this.props.setActiveVideoId}
 								/>
-							)
-						}
+							</View>
+
+						);
 
 					}
 				}
