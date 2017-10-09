@@ -198,7 +198,7 @@ export default class HTML extends React.Component {
 									stateChange={this.props.stateChange}
 									videoId={node.attribs['data-video-id']}
 									activeVideoId={this.props.activeVideoId}
-									setActiveId={this.props.setActiveVideoId}
+									setActiveVideoId={this.props.setActiveVideoId}
 								/>
 							</View>
 
