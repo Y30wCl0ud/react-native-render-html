@@ -196,9 +196,18 @@ export default class HTML extends React.Component {
 							<View key={node.attribs['data-video-id']}>
 								<HTMLYt
 									stateChange={this.props.stateChange}
-									videoId={node.attribs['data-video-id']}
 									activeVideoId={this.props.activeVideoId}
 									setActiveVideoId={this.props.setActiveVideoId}
+									videoId={node.attribs['data-video-id']}
+
+									youtubeApiKey={this.props.youtubeApiKey}
+									videoWidth={this.props.videoWidth}
+									videoHeight={this.props.videoHeight}
+									videoControls={this.props.videoControls}
+									showinfo={this.props.showinfo}
+									showFullscreenButton={this.props.showFullscreenButton}
+									loop={this.props.loop}
+									fullscreen={this.props.fullscreen}
 								/>
 							</View>
 
