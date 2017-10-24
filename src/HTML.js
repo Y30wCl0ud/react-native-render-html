@@ -320,7 +320,7 @@ export default class HTML extends PureComponent {
 			}
 
 			// Render own youtube videoComponent
-			if (attribs['data-video-id'] && tagName === 'div') {
+			if (attribs && attribs['data-video-id'] !== undefined && tagName === 'div') {
 				return this.renderers.youtubeVideo(
 					attribs,
 					convertedCSSStyles
