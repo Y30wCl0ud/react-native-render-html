@@ -298,7 +298,6 @@ export default class HTML extends PureComponent {
 				false;
 
 			if (this.renderers[tagName]) {
-				console.log(this.renderers[tagName]);
 				// If a custom renderer is available for this tag
 				return this.renderers[tagName](
 					attribs,
@@ -374,8 +373,6 @@ export default class HTML extends PureComponent {
 		let RNNodes;
 		const parser = new htmlparser2.Parser(
 			new htmlparser2.DomHandler((_err, dom) => {
-				// console.log('DOMNodes', dom);
-				// console.log('Parsed nodes', this.mapDOMNodesTORNElements(dom));
 				const RNElements = this.mapDOMNodesTORNElements(dom);
 				RNNodes = this.renderRNElements(RNElements);
 			}),
