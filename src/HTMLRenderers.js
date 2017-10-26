@@ -163,7 +163,6 @@ export function textwrapper(htmlAttribs, children, convertedCSSStyles, { key }) 
 }
 
 export function youtubeVideo(htmlAttribs, convertedCSSStyles, passProps, myProps) {
-
 	return (
 		<View key={htmlAttribs['data-video-id']}>
 			<HTMLYt

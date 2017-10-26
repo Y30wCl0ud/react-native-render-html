@@ -47,7 +47,8 @@ export default class HTML extends PureComponent {
 		ignoredStyles: [],
 		baseFontStyle: { fontSize: 14 },
 		tagsStyles: {},
-		classesStyles: {}
+		classesStyles: {},
+		onLinkPress: () => { },
 	}
 
 	constructor(props) {
@@ -364,12 +365,8 @@ export default class HTML extends PureComponent {
 						parentWrapper: wrapper,
 						tagsStyles,
 						classesStyles,
-						onLinkPress,
-						imagesMaxWidth,
 						parentTag,
 						nodeIndex,
-						emSize,
-						baseFontSize,
 						key,
 						rawChildren: children
 					},
