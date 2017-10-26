@@ -11,12 +11,13 @@ import Youtube from 'react-native-youtube';
 import HTMLYt from '../../../src/HTMLYt';
 
 export default class HTML extends PureComponent {
-
 	static propTypes = {
 		renderers: PropTypes.object.isRequired,
 		ignoredTags: PropTypes.array.isRequired,
 		ignoredStyles: PropTypes.array.isRequired,
 		decodeEntities: PropTypes.bool.isRequired,
+		debug: PropTypes.bool.isRequired,
+		listsPrefixesRenderers: PropTypes.object,
 		ignoreNodesFunction: PropTypes.func,
 		alterData: PropTypes.func,
 		alterChildren: PropTypes.func,
@@ -27,22 +28,27 @@ export default class HTML extends PureComponent {
 		containerStyle: ViewPropTypes ? ViewPropTypes.style : View.propTypes.style,
 		customWrapper: PropTypes.func,
 		onLinkPress: PropTypes.func,
+		onParsed: PropTypes.func,
 		imagesMaxWidth: PropTypes.number,
+		imagesInitialDimensions: PropTypes.shape({
+			width: PropTypes.number,
+			height: PropTypes.number
+		}),
 		emSize: PropTypes.number.isRequired,
-		baseFontSize: PropTypes.number.isRequired
+		baseFontStyle: PropTypes.object.isRequired
 	}
 
 	static defaultProps = {
 		renderers: HTMLRenderers,
+		debug: false,
 		decodeEntities: true,
 		emSize: 14,
-		baseFontSize: 14,
 		ignoredTags: IGNORED_TAGS,
 		ignoredStyles: [],
+		baseFontStyle: { fontSize: 14 },
 		tagsStyles: {},
 		classesStyles: {}
 	}
-
 	constructor(props) {
 		super(props);
 		this.state = {};
@@ -277,7 +283,10 @@ export default class HTML extends PureComponent {
 	 */
 	renderRNElements(RNElements, parentWrapper = 'root', parentIndex = 0) {
 
-		const { tagsStyles, classesStyles, onLinkPress, imagesMaxWidth, emSize, ignoredStyles, baseFontSize } = this.props;
+		const {
+			tagsStyles, classesStyles, onLinkPress, imagesMaxWidth, emSize, ignoredStyles, baseFontSize,
+			listsPrefixesRenderers
+		} = this.props;
 		return RNElements && RNElements.length ? RNElements.map((element, index) => {
 
 
@@ -314,6 +323,7 @@ export default class HTML extends PureComponent {
 						emSize,
 						baseFontSize,
 						key,
+						listsPrefixesRenderers,
 						rawChildren: children
 					});
 			}

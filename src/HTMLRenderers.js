@@ -81,24 +81,13 @@ export function img(htmlAttribs, children, convertedCSSStyles, passProps = {}) {
 }
 
 export function ul(htmlAttribs, children, convertedCSSStyles, passProps = {}) {
-	const { rawChildren, nodeIndex, key, baseFontStyle, listsPrefixesRenderers } = passProps;
-	const baseFontSize = baseFontStyle.fontSize || 14;
+	const { rawChildren, nodeIndex, key, baseFontSize, listsPrefixesRenderers } = passProps;
 	children = children && children.map((child, index) => {
 		const rawChild = rawChildren[index];
 		let prefix = false;
-		const rendererArgs = [
-			htmlAttribs,
-			children,
-			convertedCSSStyles,
-			{
-				...passProps,
-				index
-			}
-		];
-
 		if (rawChild) {
 			if (rawChild.parentTag === 'ul') {
-				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ul ? listsPrefixesRenderers.ul(...rendererArgs) : (
+				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ul ? listsPrefixesRenderers.ul(...arguments) : (
 					<View style={{
 						marginRight: 10,
 						width: baseFontSize / 2.8,
@@ -109,13 +98,13 @@ export function ul(htmlAttribs, children, convertedCSSStyles, passProps = {}) {
 					}} />
 				);
 			} else if (rawChild.parentTag === 'ol') {
-				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ol ? listsPrefixesRenderers.ol(...rendererArgs) : (
+				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ol ? listsPrefixesRenderers.ol(...arguments) : (
 					<Text style={{ marginRight: 5, fontSize: baseFontSize }}>{index + 1})</Text>
 				);
 			}
 		}
 		return (
-			<View key={`list-${nodeIndex}-${index}-${key}`} style={{ flexDirection: 'row', marginBottom: 10 }}>
+			<View key={`list-${nodeIndex}-${index}`} style={{ flexDirection: 'row', marginBottom: 10 }}>
 				{prefix}
 				<View style={{ flex: 1 }}>{child}</View>
 			</View>
