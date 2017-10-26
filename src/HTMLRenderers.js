@@ -7,13 +7,39 @@ import Youtube from 'react-native-youtube';
 import HTMLYt from '../../../src/HTMLYt';
 
 export function a(htmlAttribs, children, convertedCSSStyles, passProps) {
-	const { parentWrapper, onLinkPress, key } = passProps;
+
+	let type;
+	let idType;
+
+	if (htmlAttribs['data-action-id']) {
+		type = 'action';
+		idType = htmlAttribs['data-action-id']
+	} else if (htmlAttribs['data-article-id']) {
+		type = 'article';
+		idType = htmlAttribs['data-article-id']
+	} else if (htmlAttribs['data-inquiry-id']) {
+		type = 'inquiry';
+		idType = htmlAttribs['data-inquiry-id']
+	} else if (htmlAttribs['data-vacancy-id']) {
+		type = 'vacancy';
+		idType = htmlAttribs['data-vacancy-id']
+	} else {
+		type = ''
+		idType = '';
+	}
+
+
+	const { parentWrapper, onLinkPress, key, data } = passProps;
 	const style = _constructStyles({
 		tagName: 'a',
 		htmlAttribs,
 		passProps,
 		styleSet: parentWrapper === 'Text' ? 'TEXT' : 'VIEW'
 	});
+
+	const onPress = (evt) => onLinkPress && htmlAttribs && htmlAttribs.href ?
+		onLinkPress(evt, htmlAttribs.href, type, idType) :
+		undefined;
 
 	if (parentWrapper === 'Text') {
 		return (
@@ -60,9 +86,19 @@ export function ul(htmlAttribs, children, convertedCSSStyles, passProps = {}) {
 	children = children && children.map((child, index) => {
 		const rawChild = rawChildren[index];
 		let prefix = false;
+		const rendererArgs = [
+			htmlAttribs,
+			children,
+			convertedCSSStyles,
+			{
+				...passProps,
+				index
+			}
+		];
+
 		if (rawChild) {
 			if (rawChild.parentTag === 'ul') {
-				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ul ? listsPrefixesRenderers.ul(...arguments) : (
+				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ul ? listsPrefixesRenderers.ul(...rendererArgs) : (
 					<View style={{
 						marginRight: 10,
 						width: baseFontSize / 2.8,
@@ -73,7 +109,7 @@ export function ul(htmlAttribs, children, convertedCSSStyles, passProps = {}) {
 					}} />
 				);
 			} else if (rawChild.parentTag === 'ol') {
-				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ol ? listsPrefixesRenderers.ol(...arguments) : (
+				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ol ? listsPrefixesRenderers.ol(...rendererArgs) : (
 					<Text style={{ marginRight: 5, fontSize: baseFontSize }}>{index + 1})</Text>
 				);
 			}
@@ -114,7 +150,7 @@ export function iframe(htmlAttribs, children, convertedCSSStyles, passProps) {
 	);
 }
 
-export function br(htmlAttribs, children, convertedCSSStyles, passProps) {
+export function br(htlmAttribs, children, convertedCSSStyles, passProps) {
 	return (
 		<Text style={{ height: 1.2 * passProps.emSize, flex: 1 }} key={passProps.key}>{"\n"}</Text>
 	);
