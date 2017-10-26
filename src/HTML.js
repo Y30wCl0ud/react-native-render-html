@@ -1,19 +1,21 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
 import { View, Text, ViewPropTypes } from 'react-native';
-import { BLOCK_TAGS, TEXT_TAGS, IGNORED_TAGS, STYLESETS } from './HTMLUtils';
+import { BLOCK_TAGS, TEXT_TAGS, IGNORED_TAGS, TEXT_TAGS_IGNORING_ASSOCIATION, STYLESETS } from './HTMLUtils';
 import { cssStringToRNStyle, _getElementClassStyles } from './HTMLStyles';
 import { generateDefaultBlockStyles, generateDefaultTextStyles } from './HTMLDefaultStyles';
 import htmlparser2 from 'htmlparser2';
+import _isEqual from 'lodash.isequal';
 import * as HTMLRenderers from './HTMLRenderers';
 
 export default class HTML extends PureComponent {
-
     static propTypes = {
         renderers: PropTypes.object.isRequired,
         ignoredTags: PropTypes.array.isRequired,
         ignoredStyles: PropTypes.array.isRequired,
         decodeEntities: PropTypes.bool.isRequired,
+        debug: PropTypes.bool.isRequired,
+        listsPrefixesRenderers: PropTypes.object,
         ignoreNodesFunction: PropTypes.func,
         alterData: PropTypes.func,
         alterChildren: PropTypes.func,
@@ -24,18 +26,20 @@ export default class HTML extends PureComponent {
         containerStyle: ViewPropTypes ? ViewPropTypes.style : View.propTypes.style,
         customWrapper: PropTypes.func,
         onLinkPress: PropTypes.func,
+        onParsed: PropTypes.func,
         imagesMaxWidth: PropTypes.number,
         emSize: PropTypes.number.isRequired,
-        baseFontSize: PropTypes.number.isRequired
+        baseFontStyle: PropTypes.object.isRequired
     }
 
     static defaultProps = {
         renderers: HTMLRenderers,
+        debug: false,
         decodeEntities: true,
         emSize: 14,
-        baseFontSize: 14,
         ignoredTags: IGNORED_TAGS,
         ignoredStyles: [],
+        baseFontStyle: { fontSize: 14 },
         tagsStyles: {},
         classesStyles: {}
     }
@@ -51,33 +55,38 @@ export default class HTML extends PureComponent {
     }
 
     componentWillMount () {
-        this.registerIgnoredTags();
-        this.registerDOM();
         this.generateDefaultStyles();
     }
 
+    componentDidMount () {
+        this.registerDOM();
+    }
+
     componentWillReceiveProps (nextProps) {
-        const { html, uri, ignoredTags, renderers, baseFontSize } = this.props;
+        const { html, uri, renderers, baseFontStyle } = this.props;
 
         if (html !== nextProps.html || uri !== nextProps.uri) {
             this.imgsToRender = [];
             this.registerDOM(nextProps);
         }
-        if (ignoredTags !== nextProps.ignoredTags) {
-            this.registerIgnoredTags(nextProps);
-        }
         if (renderers !== nextProps.renderers) {
             this.renderers = { ...HTMLRenderers, ...(nextProps.renderers || {}) };
         }
-        if (baseFontSize !== nextProps.baseFontSize) {
-            this.generateDefaultStyles(nextProps.baseFontSize);
+        if (!_isEqual(baseFontStyle, nextProps.baseFontStyle)) {
+            this.generateDefaultStyles(nextProps.baseFontStyle);
+        }
+    }
+
+    componentDidUpdate (prevProps, prevState) {
+        if (this.state.dom !== prevState.dom) {
+            this.parseDOM(this.state.dom);
         }
     }
 
     async registerDOM (props = this.props) {
         const { html, uri } = props;
         if (html) {
-            this.setState({ dom: props.html });
+            this.setState({ dom: html });
         } else if (props.uri) {
             try {
                 // WIP : This should render a loader and html prop should not be set in state
@@ -93,24 +102,55 @@ export default class HTML extends PureComponent {
         }
     }
 
-    generateDefaultStyles (baseFontSize = this.props.baseFontSize) {
-        this.defaultBlockStyles = generateDefaultBlockStyles(baseFontSize);
-        this.defaultTextStyles = generateDefaultTextStyles(baseFontSize);
+    parseDOM (dom) {
+        const { decodeEntities, debug, onParsed } = this.props;
+        const parser = new htmlparser2.Parser(
+            new htmlparser2.DomHandler((_err, dom) => {
+                const RNElements = this.mapDOMNodesTORNElements(dom);
+                onParsed && onParsed(dom, RNElements);
+                this.setState({ RNNodes: this.renderRNElements(RNElements) });
+                if (debug) {
+                    console.log('DOMNodes from htmlparser2', dom);
+                    console.log('RNElements from render-html', RNElements);
+                }
+            }),
+            { decodeEntities: decodeEntities }
+        );
+        parser.write(dom);
+        parser.done();
     }
 
-    registerIgnoredTags (props = this.props) {
-        this._ignoredTags = props.ignoredTags.map((tag) => tag.toLowerCase());
+    generateDefaultStyles (baseFontStyle = this.props.baseFontStyle) {
+        this.defaultBlockStyles = generateDefaultBlockStyles(baseFontStyle.fontSize || 14);
+        this.defaultTextStyles = generateDefaultTextStyles(baseFontStyle.fontSize || 14);
     }
 
-    shouldApplyBaseFontSize (parent, classStyles) {
-        const { tagsStyles } = this.props;
-        const notOverridenByStyleAttribute =
-            !parent || !parent.attribs || !parent.attribs.style || (parent.attribs.style.search('font-size') === -1);
-        const notOverridenByTagsStyles =
-            !parent || !parent.name || !tagsStyles[parent.name] || !tagsStyles[parent.name]['fontSize'];
-        const notOverrideByClassesStyle = !classStyles || !classStyles['fontSize'];
+    filterBaseFontStyles (element, classStyles) {
+        const { tagsStyles, baseFontStyle } = this.props;
+        const { tagName, parentTag, parent, attribs } = element;
+        const styles = Object.keys(baseFontStyle);
+        let appliedStyles = {};
 
-        return notOverridenByStyleAttribute && notOverridenByTagsStyles && notOverrideByClassesStyle;
+        for (let i = 0; i < styles.length; i++) {
+            const styleAttribute = styles[i];
+            const styleAttributeWithCSSDashes = styleAttribute.replace(/[A-Z]/, (match) => { return `-${match.toLowerCase()}`; });
+            const overridenFromStyle = attribs && attribs.style && attribs.style.search(styleAttributeWithCSSDashes) !== -1;
+            const overridenFromParentStyle = parent && parent.attribs && parent.attribs.style && parent.attribs.style.search(styleAttributeWithCSSDashes) !== -1;
+
+            const overridenFromTagStyle = tagName && tagsStyles[tagName] && tagsStyles[tagName][styleAttribute];
+            const overridenFromParentTagStyle = parentTag && tagsStyles[parentTag] && tagsStyles[parentTag][styleAttribute];
+
+            const overridenFromClassStyles = classStyles && classStyles[styleAttribute];
+
+            const notOverriden = !overridenFromStyle && !overridenFromParentStyle &&
+                !overridenFromTagStyle && !overridenFromParentTagStyle &&
+                !overridenFromClassStyles;
+
+            if (notOverriden) {
+                appliedStyles[styleAttribute] = baseFontStyle[styleAttribute];
+            }
+        }
+        return appliedStyles;
     }
 
     /**
@@ -141,14 +181,14 @@ export default class HTML extends PureComponent {
     associateRawTexts (children) {
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
-            if ((child.wrapper === 'Text' && child.tagName !== 'p') && children.length > 1 && (!child.parent || child.parent.name !== 'p')) {
+            if ((child.wrapper === 'Text' && TEXT_TAGS_IGNORING_ASSOCIATION.indexOf(child.tagName) === -1) && children.length > 1 && (!child.parent || child.parent.name !== 'p')) {
                 // Texts outside <p> or not <p> themselves (with siblings)
                 let wrappedTexts = [];
                 for (let j = i; j < children.length; j++) {
                     // Loop on its next siblings and store them in an array
                     // until we encounter a block or a <p>
                     let nextSibling = children[j];
-                    if (nextSibling.wrapper !== 'Text' || nextSibling.tagName === 'p') {
+                    if (nextSibling.wrapper !== 'Text' || TEXT_TAGS_IGNORING_ASSOCIATION.indexOf(nextSibling.tagName) !== -1) {
                         break;
                     }
                     wrappedTexts.push(nextSibling);
@@ -183,14 +223,14 @@ export default class HTML extends PureComponent {
      * @memberof HTML
      */
     mapDOMNodesTORNElements (DOMNodes, parentTag = false) {
-        const { ignoreNodesFunction, alterData, alterChildren } = this.props;
+        const { ignoreNodesFunction, ignoredTags, alterData, alterChildren } = this.props;
         let RNElements = DOMNodes.map((node, nodeIndex) => {
             const { type, attribs, name, parent } = node;
             let { children, data } = node;
             if (ignoreNodesFunction && ignoreNodesFunction(node, parentTag) === true) {
                 return false;
             }
-            if (this._ignoredTags.indexOf(node.name) !== -1) {
+            if (ignoredTags.map((tag) => tag.toLowerCase()).indexOf(node.name && node.name.toLowerCase()) !== -1) {
                 return false;
             }
             if (alterData && data) {
@@ -212,7 +252,8 @@ export default class HTML extends PureComponent {
                 return {
                     wrapper: 'Text',
                     data: data.replace(/(\r\n|\n|\r)/gm, ''), // remove linebreaks
-                    attribs, parent,
+                    attribs,
+                    parent,
                     tagName: name || 'rawtext'
                 };
             }
@@ -238,7 +279,7 @@ export default class HTML extends PureComponent {
             const firstChild = children && children[0];
             if (firstChild && children.length === 1) {
                 // Specific tweaks for wrappers with a single child
-                if (attribs === firstChild.attribs &&
+                if ((attribs === firstChild.attribs || !firstChild.attribs) &&
                     firstChild.wrapper === wrapper &&
                     (tagName === firstChild.tagName || firstChild.tagName === 'rawtext')) {
                     // If the only child of a node is using the same wrapper, merge them into one
@@ -273,11 +314,14 @@ export default class HTML extends PureComponent {
      * @memberof HTML
      */
     renderRNElements (RNElements, parentWrapper = 'root', parentIndex = 0) {
-        const { tagsStyles, classesStyles, onLinkPress, imagesMaxWidth, emSize, ignoredStyles, baseFontSize } = this.props;
+        const {
+            tagsStyles, classesStyles, onLinkPress, imagesMaxWidth, emSize, ignoredStyles, baseFontStyle,
+            listsPrefixesRenderers
+        } = this.props;
         return RNElements && RNElements.length ? RNElements.map((element, index) => {
-            const { attribs, data, tagName, parent, parentTag, children, nodeIndex, wrapper } = element;
+            const { attribs, data, tagName, parentTag, children, nodeIndex, wrapper } = element;
             const Wrapper = wrapper === 'Text' ? Text : View;
-            const key = `${wrapper}-${parentIndex}-${nodeIndex}-${index}`;
+            const key = `${wrapper}-${parentIndex}-${nodeIndex}-${tagName}-${index}-${parentTag}`;
             const convertedCSSStyles =
                 attribs && attribs.style ?
                     cssStringToRNStyle(
@@ -305,24 +349,25 @@ export default class HTML extends PureComponent {
                         imagesMaxWidth,
                         parentTag,
                         nodeIndex,
+                        parentIndex,
                         emSize,
-                        baseFontSize,
+                        baseFontStyle,
                         key,
+                        data,
+                        listsPrefixesRenderers,
                         rawChildren: children
                     });
             }
 
             const classStyles = _getElementClassStyles(attribs, classesStyles);
-            // Base fontSize should be applied only if nothing else overrides it
-            const applyBaseFontSize = this.shouldApplyBaseFontSize(parent, classStyles);
             const textElement = data ?
-                <Text style={applyBaseFontSize ? { fontSize: baseFontSize } : {}}>{ data }</Text> :
+                <Text style={this.filterBaseFontStyles(element, classStyles)}>{ data }</Text> :
                 false;
 
             const style = [
-                (Wrapper === Text ? this.defaultTextStyles : this.defaultBlockStyles)[tagName],
-                classStyles,
+                (!tagsStyles || !tagsStyles[tagName]) ? (Wrapper === Text ? this.defaultTextStyles : this.defaultBlockStyles)[tagName] : undefined,
                 tagsStyles ? tagsStyles[tagName] : undefined,
+                classStyles,
                 convertedCSSStyles
             ]
             .filter((s) => s !== undefined);
@@ -337,23 +382,11 @@ export default class HTML extends PureComponent {
     }
 
     render () {
-        const { decodeEntities, customWrapper } = this.props;
-        const { dom } = this.state;
-        if (!dom) {
+        const { customWrapper } = this.props;
+        const { RNNodes } = this.state;
+        if (!RNNodes) {
             return false;
         }
-        let RNNodes;
-        const parser = new htmlparser2.Parser(
-            new htmlparser2.DomHandler((_err, dom) => {
-                // console.log('DOMNodes', dom);
-                // console.log('Parsed nodes', this.mapDOMNodesTORNElements(dom));
-                const RNElements = this.mapDOMNodesTORNElements(dom);
-                RNNodes = this.renderRNElements(RNElements);
-            }),
-            { decodeEntities: decodeEntities }
-        );
-        parser.write(dom);
-        parser.done();
 
         return customWrapper ? customWrapper(RNNodes) : (
             <View style={this.props.containerStyle || {}}>
