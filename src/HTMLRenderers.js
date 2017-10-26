@@ -85,6 +85,7 @@ export function ul(htmlAttribs, children, convertedCSSStyles, passProps = {}) {
 	children = children && children.map((child, index) => {
 		const rawChild = rawChildren[index];
 		let prefix = false;
+
 		if (rawChild) {
 			if (rawChild.parentTag === 'ul') {
 				prefix = listsPrefixesRenderers && listsPrefixesRenderers.ul ? listsPrefixesRenderers.ul(...arguments) : (

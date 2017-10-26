@@ -25,6 +25,7 @@ export default class HTML extends PureComponent {
 		uri: PropTypes.string,
 		tagsStyles: PropTypes.object,
 		classesStyles: PropTypes.object,
+		rawTextStyle: PropTypes.number, // is a stylesheet item
 		containerStyle: ViewPropTypes ? ViewPropTypes.style : View.propTypes.style,
 		customWrapper: PropTypes.func,
 		onLinkPress: PropTypes.func,
@@ -285,7 +286,7 @@ export default class HTML extends PureComponent {
 
 		const {
 			tagsStyles, classesStyles, onLinkPress, imagesMaxWidth, emSize, ignoredStyles, baseFontSize,
-			listsPrefixesRenderers
+			listsPrefixesRenderers, rawTextStyle
 		} = this.props;
 		return RNElements && RNElements.length ? RNElements.map((element, index) => {
 
@@ -353,9 +354,18 @@ export default class HTML extends PureComponent {
 			const classStyles = _getElementClassStyles(attribs, classesStyles);
 			// Base fontSize should be applied only if nothing else overrides it
 			const applyBaseFontSize = this.shouldApplyBaseFontSize(parent, classStyles);
-			const textElement = data ?
-				<Text style={applyBaseFontSize ? { fontSize: baseFontSize } : {}}>{data}</Text> :
-				false;
+
+			let textElement;
+			if (tagName === 'rawtext') {
+				textElement = data ?
+					<Text style={rawTextStyle}>{data}</Text> :
+					false;
+			} else {
+				textElement = data ?
+					<Text style={applyBaseFontSize ? { fontSize: baseFontSize } : {}}>{data}</Text> :
+					false;
+			}
+
 
 			const style = [
 				(Wrapper === Text ? this.defaultTextStyles : this.defaultBlockStyles)[tagName],
