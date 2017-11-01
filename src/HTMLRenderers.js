@@ -23,6 +23,9 @@ export function a(htmlAttribs, children, convertedCSSStyles, passProps) {
 	} else if (htmlAttribs['data-vacancy-id']) {
 		type = 'vacancy';
 		idType = htmlAttribs['data-vacancy-id']
+	} else if (htmlAttribs['data-content-id']) {
+		type = 'content';
+		idType = htmlAttribs['data-content-id']
 	} else {
 		type = ''
 		idType = '';
